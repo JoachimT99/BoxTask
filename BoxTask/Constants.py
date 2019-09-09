@@ -21,6 +21,12 @@ BLOCK_FILES = ["data/input/" + file for file in BLOCK_FILES]
 #If a you wish not to display any questionnaires, specify only None values. If you want to remove a questionnaire between blocks, replace the questionnaire path with a None value
 FORM_FILES = [None, None, None] # ["CAPE.xlsx", "5D_Curiosity.xlsx", "NfCS_full.xlsx"] # e.g. ["CAPE.xlsx", None, "NfCS_full.xlsx"] or [None, None, None]
 
+
+#Message strings:
+FAILED_TRIAL = ""
+TRIAL_INFO = ""
+
+
 if (len(FORM_FILES) != len(BLOCK_FILES)):
     raise ValueError("There must be as many FORM_FILES as there are BLOCK_FILES")
     
