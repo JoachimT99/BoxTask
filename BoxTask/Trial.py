@@ -1,12 +1,13 @@
 import Constants
 from psychopy import visual, event, core
 from Scale import Scale
+from InfoScene import InfoScene
 
 class Trial():
     """
     A class specifying a Trial and methods related to a trial. when a trial is created, it only needs to be drawn and checked for input.
     """
-    def __init__(self, win, colours, sequence, mouse, output_stream, clock, location_sequence, banner):
+    def __init__(self, win, colours, sequence, mouse, output_stream, clock, location_sequence, manager):
         """
         Initializes a Trial object.
         Params:
@@ -17,6 +18,7 @@ class Trial():
             output_stream: A dictionary object containing lists for writing data into
             clock: A clock object to get the current time
         """
+        self.manager = manager
         self.clock = clock
         self.win = win
         self.mouse = mouse
@@ -25,8 +27,13 @@ class Trial():
         self.sequence = sequence
         self.location_sequence = location_sequence
         self.place_boxes()
+        print(self.manager)
+        if len(sequence) != Constants.MATRIX[0] * Constants.MATRIX[1]:
+            banner = "This is a timed trial"
+        else:
+            banner = "This is not a timed trial"
         self.create_stimuli(banner)
-        win.flip()
+
 
     def place_boxes(self):
         """
@@ -92,7 +99,7 @@ class Trial():
         rating_text0 = visual.TextStim(self.win, text=f"More \n{self.colours[2]}", pos=[-800, -400], color=self.colours[0])
         rating_text1 = visual.TextStim(self.win, text=f"More \n{self.colours[3]}", pos=[800, -400], color=self.colours[1])
         self.rating_scale = Scale(self.win, self.colours)
-        self.rating_stims = [rating_text0, rating_text1] + self.grid
+        self.rating_stims = [rating_text0, rating_text1, banner_text] + self.grid
         self.drawables = [self.continue_box, next_box_text, banner_text] + self.grid
         self.choice_stims = [self.button0, self.button1, choice_text0, choice_text1]
         self.boxes_revealed = 0
@@ -108,17 +115,20 @@ class Trial():
         if(self.mouse.isPressedIn(self.button0, buttons=[0]) and self.button0 in self.drawables):
             [self.output["Decision"].append(-1) for _ in range(len(self.output["Box_Num"]) - 1)]
             self.output["Decision"].append(self.colours[0])
-            return True
+            self.manager.completed_trial()
+            return
         elif (self.mouse.isPressedIn(self.button1, buttons=[0]) and self.button0 in self.drawables):
             [self.output["Decision"].append(-1) for _ in range(len(self.output["Box_Num"]) - 1)]
             self.output["Decision"].append(self.colours[1])
-            return True
+            self.manager.completed_trial()
+            return 
         elif(len(self.sequence) == 0 and self.mouse.isPressedIn(self.continue_box, buttons=[0])):
             self.output["Box_Num"].append(self.boxes_revealed+1)
             self.output["Reaction_time"].append(-1)
             self.output["Probability_Estimates"].append(-1)
             [self.output["Decision"].append(-1) for _ in self.output["Box_Num"]]
-            return True
+            self.manager.failed_trial()
+            return
         if 'escape' in event.getKeys():
                 core.quit()
         if self.mouse.isPressedIn(self.continue_box, buttons=[0]):
@@ -127,7 +137,6 @@ class Trial():
             self.get_rating()
             rating_given = self.clock.getTime()
             self.output["Reaction_time"].append(rating_given - box_seen)
-        return False
     
     def next_box(self):
         """

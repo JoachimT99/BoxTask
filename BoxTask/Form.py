@@ -2,7 +2,7 @@ from psychopy import visual, event
 
 
 class Form():
-    def __init__(self, win, data_frame, output, clock):
+    def __init__(self, win, data_frame, output, clock, manager):
         """
         Initializes a form with questions and a rating scale.
         Params:
@@ -13,6 +13,7 @@ class Form():
         Returns:
             None
         """
+        self.manager = manager
         self.win = win
         self.clock = clock
         self.data = data_frame
@@ -37,13 +38,12 @@ class Form():
             self.output["Answer"].append(self.scale.getRating())
             self.output["Response_time"].append(self.t1 - self.t0)
             self.next_question()
-            return False
         elif(self.scale.noResponse == False):
             self.t1 = self.clock.getTime()
             self.output["Survey_item"].append(self.data["Survey_items"][self.current_question-1])
             self.output["Answer"].append(self.scale.getRating())
             self.output["Response_time"].append(self.t1 - self.t0)
-            return True
+            self.manager.next_trial()
 
     def next_question(self):
         """

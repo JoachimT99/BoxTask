@@ -19,15 +19,14 @@ BLOCK_FILES = ["data/input/" + file for file in BLOCK_FILES]
 
 #The form files. Must be xlsx file and follow a specified format. The list must also have the same number of elements as the block files.
 #If a you wish not to display any questionnaires, specify only None values. If you want to remove a questionnaire between blocks, replace the questionnaire path with a None value
-FORM_FILES = [None, None, None] # ["CAPE.xlsx", "5D_Curiosity.xlsx", "NfCS_full.xlsx"] # e.g. ["CAPE.xlsx", None, "NfCS_full.xlsx"] or [None, None, None]
-
+FORM_FILES = [None, "data/input/CAPE.xlsx", "data/input/5D_Curiosity.xlsx", "data/input/NfCS_full.xlsx"] # e.g. ["CAPE.xlsx", None, "NfCS_full.xlsx"] or [None, None, None]
 
 #Message strings:
 FAILED_TRIAL = ""
 TRIAL_INFO = ""
 
 
-if (len(FORM_FILES) != len(BLOCK_FILES)):
+if (len(FORM_FILES) != len(BLOCK_FILES) + 1):
     raise ValueError("There must be as many FORM_FILES as there are BLOCK_FILES")
     
     
