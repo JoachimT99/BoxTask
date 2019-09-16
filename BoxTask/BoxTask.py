@@ -37,7 +37,7 @@ class ExperimentManager(object):
     def practice_run(self):
         practice_data = data.importConditions(Constants.PRACTICE_RUN)
         self.handler = data.TrialHandler(practice_data, 1, method="sequential")
-        self.create_trial(self.handler.next(), "The next trial is a practice trial!")
+        self.create_trial(self.handler.next(), "The next trial is a practice trial! ")
 
 
     def next_block(self):
