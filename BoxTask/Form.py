@@ -1,4 +1,5 @@
-from psychopy import visual, event
+from psychopy import visual, event, core
+from InfoScene import InfoScene
 
 
 class Form():
@@ -19,6 +20,10 @@ class Form():
         self.data = data_frame
         self.current_question = 0
         self.output = output
+        self.manager.scene = InfoScene(self.win, self, self.manager.mouse, "The next segment is a questionnaire. Please answer the coming questions")
+
+    def to_trial(self):
+        self.manager.scene = self
         self.t0 = self.clock.getTime()
         self.next_question()
 
@@ -43,7 +48,7 @@ class Form():
             self.output["Survey_item"].append(self.data["Survey_items"][self.current_question-1])
             self.output["Answer"].append(self.scale.getRating())
             self.output["Response_time"].append(self.t1 - self.t0)
-            self.manager.next_trial()
+            self.manager.next_block()
 
     def next_question(self):
         """

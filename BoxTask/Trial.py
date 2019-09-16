@@ -7,7 +7,7 @@ class Trial():
     """
     A class specifying a Trial and methods related to a trial. when a trial is created, it only needs to be drawn and checked for input.
     """
-    def __init__(self, win, colours, sequence, mouse, output_stream, clock, location_sequence, manager):
+    def __init__(self, win, colours, sequence, mouse, output_stream, clock, location_sequence, manager, override_text=None):
         """
         Initializes a Trial object.
         Params:
@@ -27,13 +27,26 @@ class Trial():
         self.sequence = sequence
         self.location_sequence = location_sequence
         self.place_boxes()
-        print(self.manager)
-        if len(sequence) != Constants.MATRIX[0] * Constants.MATRIX[1]:
-            banner = "This is a timed trial"
+        info_text = "This NOT a practice trial. "
+        if override_text is not None:
+            info_text = override_text
         else:
-            banner = "This is not a timed trial"
+            if self.manager.failed_last == True:
+                info_text += "You failed the trial because too many boxes were opened! "
+            else:
+                info_text += "You completed the trial! "
+        if len(sequence) != Constants.MATRIX[0] * Constants.MATRIX[1]:
+            info_text += "The next trial is a timed trial. "
+            banner = "This is a timed trial "
+        else:
+            info_text += "The next trial is NOT a timed trial. "
+            banner = "This is not a timed trial "
+        self.manager.scene = InfoScene(self.win, self, self.mouse, info_text)
         self.create_stimuli(banner)
 
+
+    def to_trial(self):
+        self.manager.scene = self
 
     def place_boxes(self):
         """
@@ -180,6 +193,9 @@ class Trial():
         self.rating_scale.reset()
         event.clearEvents() #Event queue is cleared to prevent keypresses from rating period to be carried forward
         
+
+    def save(self):
+        return self.output
 
     def draw(self):
         """

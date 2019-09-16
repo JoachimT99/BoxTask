@@ -11,7 +11,7 @@ class InfoScene(object):
                                     text=text,
                                     wrapWidth=Constants.WINDOW_SIZE[0])
         self.next_box_text = visual.TextStim(self.win,
-                                             text="Continue to trial",
+                                             text="Continue",
                                              pos=[0, -200+y_offset])
         self.continue_box = visual.Rect(self.win, pos=[0, -200+y_offset], width=Constants.SQUARE_SIZE+50, height=Constants.SQUARE_SIZE/2, fillColor="black")
 
@@ -20,9 +20,7 @@ class InfoScene(object):
             core.quit()
         if self.mouse.isPressedIn(self.continue_box, buttons=[0]):
             event.clearEvents()
-            self.manager.next_trial()
-            
-
+            self.manager.to_trial()
         return True
     
     def draw(self):

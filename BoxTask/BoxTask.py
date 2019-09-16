@@ -12,6 +12,7 @@ import pandas
 from collections import defaultdict, namedtuple
 import os
 from InfoScene import InfoScene
+from openpyxl import load_workbook
 
 def build_location_sequence(sequence):
     if(sequence is None):
@@ -22,32 +23,59 @@ def build_location_sequence(sequence):
 
 
 class ExperimentManager(object):
-    def __init__(self, win, mouse, timer):
+    def __init__(self, win, mouse, timer, writer, summary_output):
         self.win = win
         self.mouse = mouse
         self.timer = timer
         self.block_count = 0
         self.is_running = True
-        self.scene = InfoScene(self.win, self, self.mouse, "The next trial presented will be a practice trial. You can open boxes and choose which is the dominant colour. The trial will automatically end if too many boxes are opened.")
+        self.trial_count = 0
+        self.writer = writer
+        self.summary_output = summary_output
         self.practice_run()
 
     def practice_run(self):
         practice_data = data.importConditions(Constants.PRACTICE_RUN)
         self.handler = data.TrialHandler(practice_data, 1, method="sequential")
+        self.create_trial(self.handler.next(), "The next trial is a practice trial!")
+
 
     def next_block(self):
+        # self.trial_count = 0
+        print("next block")
         if self.block_count >= len(Constants.BLOCK_FILES):
-            self.scene = None
+            self.is_running = False
+            return
         block_data = data.importConditions(Constants.BLOCK_FILES[self.block_count])
         self.block_count += 1
         self.handler = data.TrialHandler(block_data, 1, method="sequential")
+        self.next_trial()
 
+    def create_trial(self, trial_data, text_override=None):
+        self.trial_count += 1
+        #Parsing data from the data frame
+        colours = (trial_data["Colour0"], trial_data["Colour1"], trial_data["ColourName0"], trial_data["ColourName1"])
+        sequence = trial_data["Sequence"][1:-1] #The sequence string is specified with quotes marking beginning and end. The list slice will remove these.
+        location_sequence = build_location_sequence(trial_data["Location_Sequence"])
+        #Creating and running the trial
+        trial_output = defaultdict(list) #The default dict allows for dynamically adding keywords with empty lists as the default value
+        Trial(self.win, colours, sequence, self.mouse, trial_output, self.timer, location_sequence, self, text_override) # The trial object is created with each sequence. It is responsible for outputting necessary data from the trial
 
     def failed_trial(self):
-        self.scene = InfoScene(self.win, self, self.mouse, "You failed the trial because too many boxes were opened!")
+        data = self.scene.save()
+        self.summary_output[f"Box_Num_{self.trial_count}"].append(data["Box_Num"][-1])
+        self.summary_output[f"Probability_Estimate_{self.trial_count}"].append(data["Probability_Estimates"][-1])
+        pandas.DataFrame(data).to_excel(self.writer, sheet_name=f"block{self.block_count}_trial{self.trial_count}") #Creates a new sheet and uses the same output object that the trial object was given a shallow copy of        
+        self.failed_last = True
+        self.next_trial()
 
     def completed_trial(self):
-        self.scene = InfoScene(self.win, self, self.mouse, "Your decision has been saved. Continue to the next trial")
+        data = self.scene.save()
+        self.summary_output[f"Box_Num_{self.trial_count}"].append(data["Box_Num"][-1])
+        self.summary_output[f"Probability_Estimate_{self.trial_count}"].append(data["Probability_Estimates"][-1])
+        pandas.DataFrame(data).to_excel(self.writer, sheet_name=f"block{self.block_count}_trial{self.trial_count}") #Creates a new sheet and uses the same output object that the trial object was given a shallow copy of 
+        self.failed_last = False
+        self.next_trial()
 
     def next_trial(self, writer=None):
         try:
@@ -55,16 +83,17 @@ class ExperimentManager(object):
         except StopIteration:
             self.run_form()
             return
-        #Parsing data from the data frame
-        colours = (trial_data["Colour0"], trial_data["Colour1"], trial_data["ColourName0"], trial_data["ColourName1"])
-        sequence = trial_data["Sequence"][1:-1] #The sequence string is specified with quotes marking beginning and end. The list slice will remove these.
-        location_sequence = build_location_sequence(trial_data["Location_Sequence"])
-        #Creating and running the trial
-        trial_output = defaultdict(list) #The default dict allows for dynamically adding keywords with empty lists as the default value
-        self.scene = Trial(self.win, colours, sequence, self.mouse, trial_output, self.timer, location_sequence, self) # The trial object is created with each sequence. It is responsible for outputting necessary data from the trial
+        if(self.trial_count == 0):
+            if self.failed_last == True:
+                self.create_trial(trial_data, "You failed the practice trial. The real trial starts now ")
+            else:
+                self.create_trial(trial_data, "You completed the practice trial. The real trial starts now ")
+            return
+        self.create_trial(trial_data)
         #Save the trial data
-        if(writer is not None):
-            pandas.DataFrame(trial_output).to_excel(writer, sheet_name=f"block{self.block_count+1}_trial{trial_count+1}") #Creates a new sheet and uses the same output object that the trial object was given a shallow copy of 
+
+    def to_trial(self):
+        self.next_block()
 
     def run_form(self, writer=None):
         if(Constants.FORM_FILES[self.block_count] is None):
@@ -73,10 +102,10 @@ class ExperimentManager(object):
         #Parsing questionnaire data and creating form
         data_frame = pandas.read_excel(Constants.FORM_FILES[self.block_count])
         form_output = defaultdict(list) #Output stream
-        self.scene = Form(self.win, data_frame, form_output, self.timer, self)
-        self.next_block()
-        if(writer is not None):
-            pandas.DataFrame(form_output).to_excel(writer, sheet_name=f"{Constants.FORM_FILES[block_count]}_answered")
+        Form(self.win, data_frame, form_output, self.timer, self)
+        for i, item in enumerate(form_output["Answer"]):
+            self.summary_output[f"Question{i}"] = item
+        pandas.DataFrame(form_output).to_excel(self.writer, sheet_name=f"{self.block_count}_answered")
 
     def update(self):
         self.scene.check_input()
@@ -106,13 +135,22 @@ def get_subject_info():
 
 def main():
     subject_data = get_subject_info()
-    print(subject_data)
-    win = visual.Window(Constants.WINDOW_SIZE, units="pix"); # NOTE: pixel units are not scalable.
-    mouse = event.Mouse()
-    timer = clock.Clock()
-    manager = ExperimentManager(win, mouse, timer)
-    while manager.is_running:
-        manager.update()
+    summary_data = defaultdict(list)
+    summary_data["ID"].append(subject_data[0])
+    summary_data["sex"].append(subject_data[1])
+    summary_data["Age"].append(subject_data[2])
+    with pandas.ExcelWriter("Summary.xlsx", engine="xlsxwriter") as summary, pandas.ExcelWriter(f"ID_{subject_data[0]}.xlsx") as writer:
+        win = visual.Window(Constants.WINDOW_SIZE, units="pix"); # NOTE: pixel units are not scalable.
+        mouse = event.Mouse()
+        timer = clock.Clock()
+        manager = ExperimentManager(win, mouse, timer, writer, summary_data)
+        while manager.is_running:
+            manager.update()
+        print(summary_data)
+        book = load_workbook('Summary.xlsx')
+        summary.book = book
+        startrow = summary.sheets['Sheet1'].max_row
+        pandas.DataFrame(summary_data).to_excel(summary, sheet_name="test", startrow=startrow)
 
 #Start program
 main()
