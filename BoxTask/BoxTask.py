@@ -12,7 +12,7 @@ import pandas
 from collections import defaultdict, namedtuple
 import os
 from InfoScene import InfoScene
-from openpyxl import load_workbook
+from openpyxl import load_workbook, Workbook
 
 def build_location_sequence(sequence):
     if(sequence is None):
@@ -28,8 +28,9 @@ class ExperimentManager(object):
         self.mouse = mouse
         self.timer = timer
         self.block_count = 0
-        self.is_running = True
         self.trial_count = 0
+        self.question_count = 0
+        self.is_running = True
         self.writer = writer
         self.summary_output = summary_output
         self.practice_run()
@@ -62,20 +63,21 @@ class ExperimentManager(object):
         Trial(self.win, colours, sequence, self.mouse, trial_output, self.timer, location_sequence, self, text_override) # The trial object is created with each sequence. It is responsible for outputting necessary data from the trial
 
     def failed_trial(self):
-        data = self.scene.save()
-        self.summary_output[f"Box_Num_{self.trial_count}"].append(data["Box_Num"][-1])
-        self.summary_output[f"Probability_Estimate_{self.trial_count}"].append(data["Probability_Estimates"][-1])
-        pandas.DataFrame(data).to_excel(self.writer, sheet_name=f"block{self.block_count}_trial{self.trial_count}") #Creates a new sheet and uses the same output object that the trial object was given a shallow copy of        
+        self.save_trial()    
         self.failed_last = True
         self.next_trial()
 
     def completed_trial(self):
+        self.save_trial()
+        self.failed_last = False
+        self.next_trial()
+
+    def save_trial(self):
         data = self.scene.save()
         self.summary_output[f"Box_Num_{self.trial_count}"].append(data["Box_Num"][-1])
         self.summary_output[f"Probability_Estimate_{self.trial_count}"].append(data["Probability_Estimates"][-1])
-        pandas.DataFrame(data).to_excel(self.writer, sheet_name=f"block{self.block_count}_trial{self.trial_count}") #Creates a new sheet and uses the same output object that the trial object was given a shallow copy of 
-        self.failed_last = False
-        self.next_trial()
+        self.summary_output[f"Decision{self.trial_count}"].append(data["Decision"][-1])
+        pandas.DataFrame(data).to_excel(self.writer, sheet_name=f"block{self.block_count}_trial{self.trial_count}")
 
     def next_trial(self, writer=None):
         try:
@@ -95,6 +97,14 @@ class ExperimentManager(object):
     def to_trial(self):
         self.next_block()
 
+    def form_ended(self, form_output):
+        for i, item in enumerate(form_output["Answer"]):
+            self.summary_output[f"Question{self.question_count}"] = item
+            self.question_count += 1
+        pandas.DataFrame(form_output).to_excel(self.writer, sheet_name=f"{self.block_count}_answered".replace("/", "_"))
+        self.next_block()
+
+
     def run_form(self, writer=None):
         if(Constants.FORM_FILES[self.block_count] is None):
             self.next_block()
@@ -103,9 +113,6 @@ class ExperimentManager(object):
         data_frame = pandas.read_excel(Constants.FORM_FILES[self.block_count])
         form_output = defaultdict(list) #Output stream
         Form(self.win, data_frame, form_output, self.timer, self)
-        for i, item in enumerate(form_output["Answer"]):
-            self.summary_output[f"Question{i}"] = item
-        pandas.DataFrame(form_output).to_excel(self.writer, sheet_name=f"{self.block_count}_answered")
 
     def update(self):
         self.scene.check_input()
@@ -137,9 +144,9 @@ def main():
     subject_data = get_subject_info()
     summary_data = defaultdict(list)
     summary_data["ID"].append(subject_data[0])
-    summary_data["sex"].append(subject_data[1])
+    summary_data["Sex"].append(subject_data[1])
     summary_data["Age"].append(subject_data[2])
-    with pandas.ExcelWriter("Summary.xlsx", engine="xlsxwriter") as summary, pandas.ExcelWriter(f"ID_{subject_data[0]}.xlsx") as writer:
+    with pandas.ExcelWriter(f"ID_{subject_data[0]}.xlsx") as writer:
         win = visual.Window(Constants.WINDOW_SIZE, units="pix"); # NOTE: pixel units are not scalable.
         mouse = event.Mouse()
         timer = clock.Clock()
@@ -147,10 +154,19 @@ def main():
         while manager.is_running:
             manager.update()
         print(summary_data)
-        book = load_workbook('Summary.xlsx')
+        try:
+            book = load_workbook('Summary.xlsx')
+            write_headers = False
+        except FileNotFoundError:
+            book = Workbook()
+            book.create_sheet("Main")
+            write_headers = True
+        summary = pandas.ExcelWriter("Summary.xlsx", engine="openpyxl", mode="a")
         summary.book = book
-        startrow = summary.sheets['Sheet1'].max_row
-        pandas.DataFrame(summary_data).to_excel(summary, sheet_name="test", startrow=startrow)
+        summary.sheets = dict((ws.title, ws) for ws in book.worksheets)
+        append_row = book["Main"].max_row
+        pandas.DataFrame(summary_data).to_excel(summary, sheet_name="Main", startrow=append_row, header=write_headers)
+        summary.save()
 
 #Start program
 main()

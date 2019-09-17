@@ -48,7 +48,7 @@ class Form():
             self.output["Survey_item"].append(self.data["Survey_items"][self.current_question-1])
             self.output["Answer"].append(self.scale.getRating())
             self.output["Response_time"].append(self.t1 - self.t0)
-            self.manager.next_block()
+            self.manager.form_ended(self.output)
 
     def next_question(self):
         """
