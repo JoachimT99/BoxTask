@@ -38,7 +38,7 @@ class ExperimentManager(object):
     def practice_run(self):
         practice_data = data.importConditions(Constants.PRACTICE_RUN)
         self.handler = data.TrialHandler(practice_data, 1, method="sequential")
-        self.create_trial(self.handler.next(), "The next trial is a practice trial! ")
+        self.create_trial(self.handler.next(), Constants.PRACTICE_TRIAL_INFO)
 
 
     def next_block(self):
@@ -87,9 +87,9 @@ class ExperimentManager(object):
             return
         if(self.trial_count == 0):
             if self.failed_last == True:
-                self.create_trial(trial_data, "You failed the practice trial. The real trial starts now ")
+                self.create_trial(trial_data, Constants.FAILED_PRACTICE_TRIAL)
             else:
-                self.create_trial(trial_data, "You completed the practice trial. The real trial starts now ")
+                self.create_trial(trial_data, Constants.COMPLETED_PRACTICE_TRIAL)
             return
         self.create_trial(trial_data)
         #Save the trial data

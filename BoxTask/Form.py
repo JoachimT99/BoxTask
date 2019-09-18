@@ -1,6 +1,6 @@
 from psychopy import visual, event, core
 from InfoScene import InfoScene
-
+import Constants
 
 class Form():
     def __init__(self, win, data_frame, output, clock, manager):
@@ -20,7 +20,7 @@ class Form():
         self.data = data_frame
         self.current_question = 0
         self.output = output
-        self.manager.scene = InfoScene(self.win, self, self.manager.mouse, "The next segment is a questionnaire. Please answer the coming questions")
+        self.manager.scene = InfoScene(self.win, self, self.manager.mouse, Constants.QUESTIONNAIRE_INFO)
 
     def to_trial(self):
         self.manager.scene = self

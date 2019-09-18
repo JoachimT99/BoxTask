@@ -22,8 +22,21 @@ BLOCK_FILES = ["data/input/" + file for file in BLOCK_FILES]
 FORM_FILES = [None, "data/input/CAPE.xlsx", "data/input/5D_Curiosity.xlsx", "data/input/NfCS_full.xlsx"] # e.g. ["CAPE.xlsx", None, "NfCS_full.xlsx"] or [None, None, None]
 
 #Message strings:
-FAILED_TRIAL = ""
-TRIAL_INFO = ""
+TRIAL_BASE_INFO = "This NOT a practice trial. "
+FAILED_TRIAL = "You failed the trial because too many boxes were opened! "
+COMPLETED_TRIAL = "You completed the trial! "
+
+TIMED_TRIAL_INFO = "The next trial is a timed trial. "
+NOT_TIMED_INFO = "The next trial is NOT a timed trial. "
+
+BANNER_TIMED = "This is a timed trial "
+BANNER_NOT_TIMED = "This is not a timed trial "
+
+PRACTICE_TRIAL_INFO = "The next trial is a practice trial! "
+FAILED_PRACTICE_TRIAL = "You failed the practice trial. The real trial starts now "
+COMPLETED_PRACTICE_TRIAL = "You completed the practice trial. The real trial starts now "
+
+QUESTIONNAIRE_INFO = "The next segment is a questionnaire. Please answer the coming questions!"
 
 
 if (len(FORM_FILES) != len(BLOCK_FILES) + 1):

@@ -27,20 +27,20 @@ class Trial():
         self.sequence = sequence
         self.location_sequence = location_sequence
         self.place_boxes()
-        info_text = "This NOT a practice trial. "
+        info_text = Constants.TRIAL_BASE_INFO
         if override_text is not None:
             info_text = override_text
         else:
             if self.manager.failed_last == True:
-                info_text += "You failed the trial because too many boxes were opened! "
+                info_text += Constants.FAILED_TRIAL
             else:
-                info_text += "You completed the trial! "
+                info_text += Constants.COMPLETED_TRIAL
         if len(sequence) != Constants.MATRIX[0] * Constants.MATRIX[1]:
-            info_text += "The next trial is a timed trial. "
-            banner = "This is a timed trial "
+            info_text += Constants.TIMED_TRIAL_INFO
+            banner = Constants.BANNER_TIMED
         else:
-            info_text += "The next trial is NOT a timed trial. "
-            banner = "This is not a timed trial "
+            info_text += Constants.NOT_TIMED_INFO
+            banner = Constants.BANNER_NOT_TIMED
         self.manager.scene = InfoScene(self.win, self, self.mouse, info_text)
         self.create_stimuli(banner)
 
