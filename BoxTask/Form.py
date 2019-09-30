@@ -1,3 +1,4 @@
+
 from psychopy import visual, event, core
 from InfoScene import InfoScene
 import Constants
@@ -23,6 +24,13 @@ class Form():
         self.manager.scene = InfoScene(self.win, self, self.manager.mouse, Constants.QUESTIONNAIRE_INFO)
 
     def to_trial(self):
+        """
+        Starts the form from the infoscene
+        Params:
+            None
+        Returns:
+            None
+        """
         self.manager.scene = self
         self.t0 = self.clock.getTime()
         self.next_question()
@@ -38,17 +46,29 @@ class Form():
         if 'escape' in event.getKeys():
             core.quit()
         if(self.scale.noResponse == False and self.current_question < len(self.data)):
-            self.t1 = self.clock.getTime()
-            self.output["Survey_item"].append(self.data["Survey_items"][self.current_question-1])
-            self.output["Answer"].append(self.scale.getRating())
-            self.output["Response_time"].append(self.t1 - self.t0)
+            self.save()
             self.next_question()
         elif(self.scale.noResponse == False):
-            self.t1 = self.clock.getTime()
-            self.output["Survey_item"].append(self.data["Survey_items"][self.current_question-1])
-            self.output["Answer"].append(self.scale.getRating())
-            self.output["Response_time"].append(self.t1 - self.t0)
+            self.save()
             self.manager.form_ended(self.output)
+
+
+    def save(self):
+        """
+        Saves the rating to the defaultdict instance
+        Params:
+            None
+        Returns:
+            None
+        """
+        rating = self.scale.getRating()
+        if type(rating) == str:
+            rating = self.data["Scale"][self.current_question-1].split(",").index(rating)
+            rating += 1
+        self.t1 = self.clock.getTime()
+        self.output["Survey_item"].append(self.data["Survey_items"][self.current_question-1])
+        self.output["Answer"].append(rating)
+        self.output["Response_time"].append(self.t1 - self.t0)
 
     def next_question(self):
         """
@@ -77,6 +97,7 @@ class Form():
                                             )
         self.current_question += 1
         self.t0 = self.clock.getTime()
+
 
     def draw(self):
         """

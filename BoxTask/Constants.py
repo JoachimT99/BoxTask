@@ -1,3 +1,7 @@
+"""
+Serves as a singleton to keep an ordered view of program constants
+"""
+
 import os
 #Grid Constants
 BORDER = 50 #Defines the general border inside the window that should be padded in
@@ -13,13 +17,12 @@ RATING_TEXT_SCALE = 0.75
 
 
 #INPUT FILE SPECIFICATION:
-PRACTICE_RUN = "data/input/practice.xlsx"
+PRACTICE_RUN = "practice.xlsx"
 BLOCK_FILES = ["colour_sequences_12.xlsx", "colour_sequences_6or9_a.xlsx", "colour_sequences_6or9_b.xlsx"] #The blocks of sequences. Must be xlsx file and follow a specified format
-BLOCK_FILES = ["data/input/" + file for file in BLOCK_FILES]
 
 #The form files. Must be xlsx file and follow a specified format. The list must also have the same number of elements as the block files.
 #If a you wish not to display any questionnaires, specify only None values. If you want to remove a questionnaire between blocks, replace the questionnaire path with a None value
-FORM_FILES = [None, "data/input/CAPE.xlsx", "data/input/5D_Curiosity.xlsx", "data/input/NfCS_full.xlsx"] # e.g. ["CAPE.xlsx", None, "NfCS_full.xlsx"] or [None, None, None]
+FORM_FILES = [None, "NfCS_full.xlsx", "5D_Curiosity.xlsx", "CAPE.xlsx"] # e.g. ["CAPE.xlsx", None, "NfCS_full.xlsx"] or [None, None, None]
 
 #Message strings:
 TRIAL_BASE_INFO = "This NOT a practice trial. "
@@ -42,17 +45,3 @@ QUESTIONNAIRE_INFO = "The next segment is a questionnaire. Please answer the com
 if (len(FORM_FILES) != len(BLOCK_FILES) + 1):
     raise ValueError("There must be as many FORM_FILES as there are BLOCK_FILES")
     
-    
-    
-    
-    
-"""
-Practice run: 3 boxes before finishing. Locations: random. Practice_trial excel file X
-Info banner: Top of the screen on the trial scene.
-Info screen between each trial
-Data output: summary for all. And decision should be recorded
-Dialog box: ID age sex 
-No decision circles on entering each trial X
-No rating on premature end X
-Decision allowed on last box X
-"""

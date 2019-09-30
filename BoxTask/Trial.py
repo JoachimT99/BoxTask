@@ -127,20 +127,20 @@ class Trial():
         """
         if(self.mouse.isPressedIn(self.button0, buttons=[0]) and self.button0 in self.drawables):
             [self.output["Decision"].append(-1) for _ in range(len(self.output["Box_Num"]) - 1)]
-            self.output["Decision"].append(self.colours[0])
-            self.manager.completed_trial()
+            self.output["Decision"].append(self.colours[2])
+            self.manager.completed_trial(False)
             return
         elif (self.mouse.isPressedIn(self.button1, buttons=[0]) and self.button0 in self.drawables):
             [self.output["Decision"].append(-1) for _ in range(len(self.output["Box_Num"]) - 1)]
-            self.output["Decision"].append(self.colours[1])
-            self.manager.completed_trial()
+            self.output["Decision"].append(self.colours[3])
+            self.manager.completed_trial(False)
             return 
         elif(len(self.sequence) == 0 and self.mouse.isPressedIn(self.continue_box, buttons=[0])):
             self.output["Box_Num"].append(self.boxes_revealed+1)
             self.output["Reaction_time"].append(-1)
             self.output["Probability_Estimates"].append(-1)
             [self.output["Decision"].append(-1) for _ in self.output["Box_Num"]]
-            self.manager.failed_trial()
+            self.manager.completed_trial(True)
             return
         if 'escape' in event.getKeys():
                 core.quit()
