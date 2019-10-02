@@ -11,6 +11,7 @@ MATRIX = (4, 3) #The grid size
 
 #Application constants
 WINDOW_SIZE = [1920, 1080] #The window resolution
+BACKGROUND_COLOR = (-0.5, -0.5, -0.5) # A normalized rgb value with each channel taking a value between -1 and 1
 # Setting up stimuli
 CONFIDENCE_RATING_LVLS = [f"{x}%" for x in range(100, 50, -10)] + [f"{x}%" for x in range(50, 101, 10)]
 RATING_TEXT_SCALE = 0.75
