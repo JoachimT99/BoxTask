@@ -4,7 +4,7 @@ from InfoScene import InfoScene
 import Constants
 
 class Form():
-    def __init__(self, win, data_frame, output, clock, manager):
+    def __init__(self, win, data_frame, output, clock, manager, override_text=None):
         """
         Initializes a form with questions and a rating scale.
         Params:
@@ -21,7 +21,15 @@ class Form():
         self.data = data_frame
         self.current_question = 0
         self.output = output
-        self.manager.scene = InfoScene(self.win, self, self.manager.mouse, Constants.QUESTIONNAIRE_INFO)
+        info_text = ""
+        if override_text is not None:
+            info_text = override_text
+        else:
+            if self.manager.failed_last == True:
+                info_text += Constants.FAILED_TRIAL
+            else:
+                info_text += Constants.COMPLETED_TRIAL
+        self.manager.scene = InfoScene(self.win, self, self.manager.mouse,f"{info_text} \n{Constants.QUESTIONNAIRE_INFO}")
 
     def to_trial(self):
         """
