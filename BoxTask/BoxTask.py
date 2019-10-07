@@ -233,7 +233,7 @@ def main():
     summary_data["Sex"].append(subject_data[1])
     summary_data["Age"].append(subject_data[2])
     with pandas.ExcelWriter(f"./data/ID_{subject_data[0]}.xlsx") as writer:
-        win = visual.Window(Constants.WINDOW_SIZE, units="pix"); # NOTE: pixel units are not scalable.
+        win = visual.Window(Constants.WINDOW_SIZE, units="pix", fullscr=Constants.FULLSCREEN); # NOTE: pixel units are not scalable.
         mouse = event.Mouse()
         timer = clock.Clock()
         manager = ExperimentManager(win, mouse, timer, writer, summary_data)
