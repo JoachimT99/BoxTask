@@ -34,14 +34,14 @@ class ExperimentManager(object):
     """
     This class is a high level manager class using a state manager pattern.
     """
-    def __init__(self, win, mouse, timer, writer, summary_output):
+    def __init__(self, win, mouse, timer, folder, summary_output):
         """
         Initializes the experiment class
         Params:
             win: An instance representing a window on screen
             mouse: An instance representing the mouse
             timer: A clock instance to be used for timing
-            writer: An instance of a pandas writer
+            folder: foldername for subject data
             summary_output: A defaultdict for storing summary experiment output
         Returns:
             None
@@ -53,7 +53,7 @@ class ExperimentManager(object):
         self.trial_count = 0
         self.question_count = 0
         self.is_running = True
-        self.writer = writer
+        self.folder = folder
         self.summary_output = summary_output
         self.practice_run() # Start the practice run NOTE: Only one practice run
 
@@ -128,7 +128,8 @@ class ExperimentManager(object):
         self.summary_output[f"Box_Num_{self.trial_count}"].append(data["Box_Num"][-1])
         self.summary_output[f"Probability_Estimate_{self.trial_count}"].append(data["Probability_Estimates"][-1])
         self.summary_output[f"Decision{self.trial_count}"].append(data["Decision"][-1])
-        pandas.DataFrame(data).to_excel(self.writer, sheet_name=f"block{self.block_count}_trial{self.trial_count-1}")
+        with open(f"./data/{self.folder}/block{self.block_count}_trial{self.trial_count-1}.csv", mode="w+") as file:
+            pandas.DataFrame(data).to_csv(file)
 
     def next_trial(self):
         """
@@ -168,7 +169,8 @@ class ExperimentManager(object):
         for item in form_output["Answer"]:
             self.summary_output[f"{Constants.FORM_FILES[self.block_count]}_Question{self.question_count}"] = item
             self.question_count += 1
-        pandas.DataFrame(form_output).to_excel(self.writer, sheet_name=f"{Constants.FORM_FILES[self.block_count]}_answered")
+        with open(f"./data/{self.folder}/{Constants.FORM_FILES[self.block_count]}_answered.csv", mode="w+") as file:
+            pandas.DataFrame(form_output).to_csv(file)
         self.next_block()
 
 
@@ -208,14 +210,10 @@ def get_subject_info():
     Returns:
         list of info or raises a valueError
     """
-    dlg = gui.Dlg(title="Box Task Experiment")
-    dlg.addText("Subject info")
-    dlg.addField("ID")
-    dlg.addField("Gender", choices=["Male", "Female"])
-    dlg.addField("Age")
-    data = dlg.show()
+    info = {"ID":"00", "Gender":("Male", "Female"), "Age":"00"}
+    dlg = gui.DlgFromDict(dictionary=info, title="Enter relevant information", order=("ID", "Gender", "Age"))
     if(dlg.OK):
-        return data
+        return info
     else:
         raise ValueError("Participant did not fill out the dialogue box")
 
@@ -229,30 +227,26 @@ def main():
     """
     subject_data = get_subject_info()
     summary_data = defaultdict(list)
-    summary_data["ID"].append(subject_data[0])
-    summary_data["Sex"].append(subject_data[1])
-    summary_data["Age"].append(subject_data[2])
-    with pandas.ExcelWriter(f"./data/ID_{subject_data[0]}.xlsx") as writer:
-        win = visual.Window(Constants.WINDOW_SIZE, units="pix", fullscr=Constants.FULLSCREEN, color=Constants.BACKGROUND_COLOR); # NOTE: pixel units are not scalable.
-        mouse = event.Mouse()
-        timer = clock.Clock()
-        manager = ExperimentManager(win, mouse, timer, writer, summary_data)
-        while manager.is_running:
-            manager.update()
-        print(summary_data)
-        try:
-            book = load_workbook('./data/Summary.xlsx')
-            write_headers = False
-        except FileNotFoundError:
-            book = Workbook()
-            book.create_sheet("Main")
-            write_headers = True
-        summary = pandas.ExcelWriter("./data/Summary.xlsx", engine="openpyxl", mode="a")
-        summary.book = book
-        summary.sheets = dict((ws.title, ws) for ws in book.worksheets)
-        append_row = book["Main"].max_row
-        pandas.DataFrame(summary_data).to_excel(summary, sheet_name="Main", startrow=append_row, header=write_headers)
-        summary.save()
+    summary_data["ID"].append(subject_data["ID"])
+    summary_data["Sex"].append(subject_data["Gender"])
+    summary_data["Age"].append(subject_data["Age"])
+    folder = f"ID_{subject_data['ID']}"
+    if not os.path.isdir(f"./data/{folder}"):
+        os.makedirs(f"./data/{folder}")
+    win = visual.Window(Constants.WINDOW_SIZE, units="pix", fullscr=Constants.FULLSCREEN, color=Constants.BACKGROUND_COLOR); # NOTE: pixel units are not scalable.
+    mouse = event.Mouse()
+    timer = clock.Clock()
+    manager = ExperimentManager(win, mouse, timer, folder, summary_data)
+    while manager.is_running:
+        manager.update()
+    print(summary_data)
+    summary_file = "./data/Summary.csv"
+    if not os.path.isfile(summary_file):
+        with open(summary_file, mode="w+") as file:
+            pandas.DataFrame(summary_data).to_csv(file)
+    else:
+        with open(summary_file, mode="a") as file:
+            pandas.DataFrame(summary_data).to_csv(file, header=False)
 
 #Start program  
 if __name__ == "__main__":
